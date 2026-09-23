@@ -85,7 +85,7 @@ const AUTH_KEY = 'crm_insurance_authenticated_v1';
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const stored = localStorage.getItem(AUTH_KEY);
-    return stored === null ? true : stored === 'true';
+    return stored === 'true';
   });
 
   const [currentTab, setCurrentTab] = useState<'dashboard' | 'leads' | 'calendar' | 'users' | 'settings' | 'chat' | 'activity-tracking'>('dashboard');
