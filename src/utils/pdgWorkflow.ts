@@ -38,12 +38,14 @@ export const formatPdgEmailContent = (
   commercialUser?: User | null,
   cabinetInfo?: CabinetInfo
 ): { subject: string; html: string; text: string } => {
+  const anyLead = lead as any;
+  const anyCabinet = (cabinetInfo || {}) as any;
   const subject = formatPdgEmailSubject(lead);
   const clientNom = `${lead.civilite ? lead.civilite + ' ' : ''}${lead.nom || ''} ${lead.prenom || ''}`.trim() || 'Client';
   const devisRef = lead.referenceDevis || lead.id || 'N/A';
   const commercialNom = commercialUser ? getUserDisplayName(commercialUser) : (lead.assignedBroker || 'Agent Commercial');
   const commercialTel = commercialUser?.telephonyConfig?.directNumber || commercialUser?.telephone || cabinetInfo?.telephone || 'Non renseigné';
-  const commercialEmail = commercialUser?.email || cabinetInfo?.email || 'Non renseigné';
+  const commercialEmail = commercialUser?.email || cabinetInfo?.emailContact || anyCabinet?.email || 'Non renseigné';
   const equipeName = lead.equipe || commercialUser?.equipe || 'Équipe Commerciale';
   const dateTransmission = new Date().toLocaleString('fr-FR', {
     day: '2-digit',
@@ -54,99 +56,127 @@ export const formatPdgEmailContent = (
   });
 
   // Cotisations et tarification
-  const cotisationMensuelle = lead.cotisationMensuelle || (lead.tarification ? lead.tarification.mensuel : 0);
-  const cotisationAnnuelle = lead.cotisationAnnuelle || (lead.tarification ? lead.tarification.annuel : 0);
-  const fraisDossier = lead.fraisDossier ?? 0;
-  const franchise = lead.franchiseMontant ?? 0;
-  const formuleChoisie = lead.formuleSelectionnee || 'Formule Standard';
+  const autoDet = lead.autoDetails as any;
+  const habDet = lead.habitationDetails as any;
+  const vtcDet = lead.vtcDetails as any;
+
+  const cotisationMensuelle = autoDet?.cotisationMontant || habDet?.cotisationMontant || vtcDet?.cotisationMontant || anyLead.cotisationMensuelle || 0;
+  const cotisationAnnuelle = anyLead.cotisationAnnuelle || (cotisationMensuelle ? cotisationMensuelle * 12 : 0);
+  const fraisDossier = autoDet?.fraisDossier ?? habDet?.fraisDossier ?? vtcDet?.fraisDossier ?? anyLead.fraisDossier ?? 0;
+  const franchise = autoDet?.franchiseGenerale ?? anyLead.franchiseMontant ?? 0;
+  const formuleChoisie = autoDet?.formuleSouhaitee || habDet?.formuleSouhaitee || vtcDet?.formuleSouhaitee || anyLead.formuleSelectionnee || 'Formule Standard';
 
   // Section Risque spécifique
   let risqueDetailsHtml = '';
   let risqueDetailsText = '';
 
   if (lead.type === 'AUTO') {
+    const immat = autoDet?.immatriculation || anyLead.vehiculeImmatriculation || 'En cours';
+    const marque = autoDet?.marque || anyLead.vehiculeMarque || '';
+    const modele = autoDet?.modele || anyLead.vehiculeModele || '';
+    const dateMec = autoDet?.dateMiseEnCirculation || anyLead.vehiculeDateMiseEnCirculation || 'Non renseignée';
+    const bonus = autoDet?.bonusMalus !== undefined ? autoDet.bonusMalus : (anyLead.vehiculeBonusMalus !== undefined ? anyLead.vehiculeBonusMalus : 'Non renseigné');
+    const usage = autoDet?.usageVehicule || anyLead.vehiculeUsage || 'Privé / Trajet Travail';
+
     risqueDetailsHtml = `
       <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
         <h4 style="color: #0f172a; margin-top: 0; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
           🚗 Détails du Risque Auto
         </h4>
         <table style="width: 100%; font-size: 13px; color: #334155; border-collapse: collapse;">
-          <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Véhicule :</td><td>${lead.vehiculeMarque || ''} ${lead.vehiculeModele || ''}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Immatriculation :</td><td style="font-family: monospace; font-weight: bold; color: #1e40af;">${lead.vehiculeImmatriculation || 'En cours / Non renseignée'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Date 1ère mise en circulation :</td><td>${lead.vehiculeDateMiseEnCirculation || 'Non renseignée'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Bonus / Malus :</td><td>${lead.vehiculeBonusMalus !== undefined ? lead.vehiculeBonusMalus : 'Non renseigné'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Usage :</td><td>${lead.vehiculeUsage || 'Privé / Trajet Travail'}</td></tr>
+          <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Véhicule :</td><td>${marque} ${modele}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Immatriculation :</td><td style="font-family: monospace; font-weight: bold; color: #1e40af;">${immat}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Date 1ère mise en circulation :</td><td>${dateMec}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Bonus / Malus :</td><td>${bonus}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Usage :</td><td>${usage}</td></tr>
         </table>
       </div>
     `;
     risqueDetailsText = `DÉTAILS RISQUE AUTO:
-- Véhicule: ${lead.vehiculeMarque || ''} ${lead.vehiculeModele || ''}
-- Immatriculation: ${lead.vehiculeImmatriculation || 'Non renseignée'}
-- Date 1ère mise en circulation: ${lead.vehiculeDateMiseEnCirculation || 'Non renseignée'}
-- Bonus/Malus: ${lead.vehiculeBonusMalus !== undefined ? lead.vehiculeBonusMalus : 'Non renseigné'}
-- Usage: ${lead.vehiculeUsage || 'Privé / Trajet Travail'}
+- Véhicule: ${marque} ${modele}
+- Immatriculation: ${immat}
+- Date 1ère mise en circulation: ${dateMec}
+- Bonus/Malus: ${bonus}
+- Usage: ${usage}
 `;
   } else if (lead.type === 'HABITATION') {
+    const logType = habDet?.typeLogement || anyLead.logementType || 'Appartement';
+    const logStatut = habDet?.qualiteOccupant || anyLead.logementStatut || 'Locataire';
+    const logPieces = habDet?.nombrePieces || anyLead.logementPieces || 'N/A';
+    const logSurface = habDet?.surfaceM2 || anyLead.logementSurface || 'N/A';
+    const logCapital = habDet?.capitalMobilier || anyLead.logementCapitalMobilier || 'N/A';
+
     risqueDetailsHtml = `
       <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
         <h4 style="color: #0f172a; margin-top: 0; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
           🏡 Détails du Risque Habitation
         </h4>
         <table style="width: 100%; font-size: 13px; color: #334155; border-collapse: collapse;">
-          <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Type de logement :</td><td>${lead.logementType || 'Appartement'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Qualité de l'occupant :</td><td>${lead.logementStatut || 'Locataire'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Nombre de pièces :</td><td>${lead.logementPieces || 'N/A'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Surface habitable :</td><td>${lead.logementSurface ? lead.logementSurface + ' m²' : 'N/A'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Capital mobilier estimé :</td><td>${lead.logementCapitalMobilier ? lead.logementCapitalMobilier + ' €' : 'N/A'}</td></tr>
+          <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Type de logement :</td><td>${logType}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Qualité de l'occupant :</td><td>${logStatut}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Nombre de pièces :</td><td>${logPieces}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Surface habitable :</td><td>${logSurface} m²</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Capital mobilier estimé :</td><td>${logCapital} €</td></tr>
         </table>
       </div>
     `;
     risqueDetailsText = `DÉTAILS RISQUE HABITATION:
-- Type de logement: ${lead.logementType || 'Appartement'}
-- Qualité occupant: ${lead.logementStatut || 'Locataire'}
-- Nombre de pièces: ${lead.logementPieces || 'N/A'}
-- Surface: ${lead.logementSurface ? lead.logementSurface + ' m²' : 'N/A'}
-- Capital mobilier: ${lead.logementCapitalMobilier ? lead.logementCapitalMobilier + ' €' : 'N/A'}
+- Type de logement: ${logType}
+- Qualité occupant: ${logStatut}
+- Nombre de pièces: ${logPieces}
+- Surface: ${logSurface} m²
+- Capital mobilier: ${logCapital} €
 `;
   } else if (lead.type === 'VTC') {
+    const soc = vtcDet?.raisonSociale || anyLead.vtcSociete || anyLead.nomEntreprise || 'Non renseignée';
+    const siret = vtcDet?.siret || anyLead.vtcSiret || 'Non renseigné';
+    const cartePro = vtcDet?.numeroCartePro || anyLead.vtcCartePro || 'Non renseignée';
+    const marque = vtcDet?.marque || anyLead.vehiculeMarque || '';
+    const modele = vtcDet?.modele || anyLead.vehiculeModele || '';
+    const immat = vtcDet?.immatriculation || anyLead.vehiculeImmatriculation || 'Immat inconnue';
+
     risqueDetailsHtml = `
       <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
         <h4 style="color: #0f172a; margin-top: 0; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px;">
           🚕 Détails Professionnels VTC
         </h4>
         <table style="width: 100%; font-size: 13px; color: #334155; border-collapse: collapse;">
-          <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Raison Sociale :</td><td>${lead.vtcSociete || lead.nomEntreprise || 'Non renseignée'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">SIRET :</td><td style="font-family: monospace;">${lead.vtcSiret || 'Non renseigné'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Carte Pro VTC :</td><td>${lead.vtcCartePro || 'Non renseignée'}</td></tr>
-          <tr><td style="padding: 4px 0; font-weight: 600;">Véhicule & Immat :</td><td>${lead.vehiculeMarque || ''} ${lead.vehiculeModele || ''} (${lead.vehiculeImmatriculation || 'Immat inconnue'})</td></tr>
+          <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Raison Sociale :</td><td>${soc}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">SIRET :</td><td style="font-family: monospace;">${siret}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Carte Pro VTC :</td><td>${cartePro}</td></tr>
+          <tr><td style="padding: 4px 0; font-weight: 600;">Véhicule & Immat :</td><td>${marque} ${modele} (${immat})</td></tr>
         </table>
       </div>
     `;
     risqueDetailsText = `DÉTAILS RISQUE VTC:
-- Raison Sociale: ${lead.vtcSiret || 'Non renseignée'}
-- SIRET: ${lead.vtcSiret || 'Non renseigné'}
-- Carte Pro VTC: ${lead.vtcCartePro || 'Non renseignée'}
-- Véhicule: ${lead.vehiculeMarque || ''} ${lead.vehiculeModele || ''} (${lead.vehiculeImmatriculation || 'Immat inconnue'})
+- Raison Sociale: ${soc}
+- SIRET: ${siret}
+- Carte Pro VTC: ${cartePro}
+- Véhicule: ${marque} ${modele} (${immat})
 `;
   }
 
   // Documents justificatifs
   const docsList = lead.documents && lead.documents.length > 0
-    ? lead.documents.map(d => `• ${d.nom} (${d.statut || 'En attente'})`).join('<br>')
+    ? lead.documents.map(d => `• ${(d as any).name || (d as any).nom || 'Document'} (${(d as any).status || (d as any).statut || 'Enregistré'})`).join('<br>')
     : 'Aucune pièce jointe enregistrée pour le moment';
 
   const docsListText = lead.documents && lead.documents.length > 0
-    ? lead.documents.map(d => `- ${d.nom} (${d.statut || 'En attente'})`).join('\n')
+    ? lead.documents.map(d => `- ${(d as any).name || (d as any).nom || 'Document'} (${(d as any).status || (d as any).statut || 'Enregistré'})`).join('\n')
     : 'Aucune pièce jointe enregistrée pour le moment';
+
+  const adresseStr = anyLead.adresse || anyLead.adresseComplete || `${lead.codePostal || ''} ${lead.ville || ''}`.trim();
+  const dateNais = autoDet?.dateNaissance || (lead as any).dateNaissance;
+  const prof = autoDet?.profession || (lead as any).profession;
+  const comp = autoDet?.compagnieAssuranceActuelle || (lead as any).compagnie;
+  const dateEffet = autoDet?.dateEffetSouhaitee || (lead as any).dateEffetSouhaitee;
+  const obs = lead.notes || (lead as any).commentaires;
 
   const html = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 680px; margin: 0 auto; color: #1e293b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
       <!-- En-tête bandeau PDG -->
       <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: #ffffff; padding: 24px; text-align: left;">
-        <div style="display: inline-block; background-color: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
-          🛡️ STATUT : PDG — PRISE DE GARANTIE
-        </div>
-        <h2 style="margin: 0; font-size: 22px; font-weight: 800; line-height: 1.3;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: bold; letter-spacing: -0.5px;">
           Demande de Souscription & Prise de Garantie
         </h2>
         <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">
@@ -170,9 +200,9 @@ export const formatPdgEmailContent = (
             <tr><td style="padding: 4px 0; width: 40%; font-weight: 600;">Nom complet :</td><td style="font-size: 14px; font-weight: bold; color: #0f172a;">${clientNom}</td></tr>
             <tr><td style="padding: 4px 0; font-weight: 600;">Téléphone :</td><td><a href="tel:${lead.telephone}" style="color: #2563eb; text-decoration: none; font-weight: 600;">${lead.telephone || 'Non renseigné'}</a></td></tr>
             <tr><td style="padding: 4px 0; font-weight: 600;">Email :</td><td><a href="mailto:${lead.email}" style="color: #2563eb; text-decoration: none;">${lead.email || 'Non renseigné'}</a></td></tr>
-            <tr><td style="padding: 4px 0; font-weight: 600;">Adresse :</td><td>${lead.adresse || ''} ${lead.codePostal || ''} ${lead.ville || ''}</td></tr>
-            ${lead.dateNaissance ? `<tr><td style="padding: 4px 0; font-weight: 600;">Date de naissance :</td><td>${lead.dateNaissance}</td></tr>` : ''}
-            ${lead.profession ? `<tr><td style="padding: 4px 0; font-weight: 600;">Profession :</td><td>${lead.profession}</td></tr>` : ''}
+            <tr><td style="padding: 4px 0; font-weight: 600;">Adresse :</td><td>${adresseStr || 'Non renseignée'}</td></tr>
+            ${dateNais ? `<tr><td style="padding: 4px 0; font-weight: 600;">Date de naissance :</td><td>${dateNais}</td></tr>` : ''}
+            ${prof ? `<tr><td style="padding: 4px 0; font-weight: 600;">Profession :</td><td>${prof}</td></tr>` : ''}
           </table>
         </div>
 
@@ -189,8 +219,8 @@ export const formatPdgEmailContent = (
             ${cotisationAnnuelle ? `<tr><td style="padding: 4px 0; font-weight: 600;">Cotisation annuelle :</td><td>${cotisationAnnuelle} € / an</td></tr>` : ''}
             <tr><td style="padding: 4px 0; font-weight: 600;">Frais de dossier :</td><td>${fraisDossier} €</td></tr>
             <tr><td style="padding: 4px 0; font-weight: 600;">Franchise générale :</td><td>${franchise} €</td></tr>
-            ${lead.compagnie ? `<tr><td style="padding: 4px 0; font-weight: 600;">Compagnie partenaire :</td><td>${lead.compagnie}</td></tr>` : ''}
-            ${lead.dateEffetSouhaitee ? `<tr><td style="padding: 4px 0; font-weight: 600;">Date d'effet demandée :</td><td style="font-weight: bold; color: #b45309;">${lead.dateEffetSouhaitee}</td></tr>` : ''}
+            ${comp ? `<tr><td style="padding: 4px 0; font-weight: 600;">Compagnie partenaire :</td><td>${comp}</td></tr>` : ''}
+            ${dateEffet ? `<tr><td style="padding: 4px 0; font-weight: 600;">Date d'effet demandée :</td><td style="font-weight: bold; color: #b45309;">${dateEffet}</td></tr>` : ''}
           </table>
         </div>
 
@@ -227,13 +257,13 @@ export const formatPdgEmailContent = (
           </table>
         </div>
 
-        ${lead.commentaires || lead.notes ? `
+        ${obs ? `
         <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
           <h4 style="color: #92400e; margin-top: 0; margin-bottom: 6px; font-size: 13px; text-transform: uppercase;">
             💬 Remarques & Observations du Commercial :
           </h4>
           <p style="margin: 0; font-size: 13px; color: #78350f; white-space: pre-wrap;">
-            ${lead.commentaires || lead.notes}
+            ${obs}
           </p>
         </div>
         ` : ''}
@@ -263,13 +293,13 @@ Téléphone commercial : ${commercialTel} | Email : ${commercialEmail}
 COORDONNÉES SOUSCRIPTEUR:
 - Téléphone : ${lead.telephone || 'N/A'}
 - Email : ${lead.email || 'N/A'}
-- Adresse : ${lead.adresse || ''} ${lead.codePostal || ''} ${lead.ville || ''}
+- Adresse : ${adresseStr || 'Non renseignée'}
 
 ${risqueDetailsText}
 DOCUMENTS DU DOSSIER:
 ${docsListText}
 
-${lead.commentaires ? 'OBSERVATIONS COMMERCIAL:\n' + lead.commentaires : ''}
+${obs ? 'OBSERVATIONS COMMERCIAL:\n' + obs : ''}
 ======================================================
 `;
 
@@ -319,7 +349,7 @@ export const notifyGestionnairesOnPdg = async ({
   }
 
   // Fallback si aucun compte gestionnaire n'a d'email : notifier les directeurs ou le cabinet
-  const fallbackEmail = cabinetInfo?.emailGestionnaire || cabinetInfo?.email;
+  const fallbackEmail = cabinetInfo?.emailContact || (cabinetInfo as any)?.email;
   const recipientEmails: string[] = targetGestionnaires.map((g) => g.email.trim().toLowerCase());
 
   if (recipientEmails.length === 0 && fallbackEmail && fallbackEmail.includes('@')) {
@@ -367,9 +397,9 @@ export const notifyGestionnairesOnPdg = async ({
   }
 
   // 4. Envoi de l'email via le serveur SMTP
-  const effectiveSmtp = (initiatorUser?.smtpConfig?.useDedicatedSmtp && initiatorUser.smtpConfig.host)
+  const effectiveSmtp = (initiatorUser?.smtpConfig?.host)
     ? initiatorUser.smtpConfig
-    : cabinetInfo?.smtpConfig || smtpConfig;
+    : (cabinetInfo as any)?.smtpConfig || smtpConfig;
 
   const emailContent = formatPdgEmailContent(lead, initiatorUser, cabinetInfo);
 

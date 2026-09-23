@@ -28,7 +28,8 @@ import {
   VolumeX,
   Check,
   ExternalLink,
-  Sliders
+  Sliders,
+  ArrowLeft
 } from 'lucide-react';
 import {
   User,
@@ -62,6 +63,7 @@ interface ChatViewProps {
   onToggleReaction: (messageId: string, emoji: string) => void;
   selectedChannelId?: string;
   onSelectChannel?: (channelId: string) => void;
+  onMarkAllAsRead?: () => void;
   unreadCountByChannel?: Record<string, number>;
 }
 
@@ -75,6 +77,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   onToggleReaction,
   selectedChannelId,
   onSelectChannel,
+  onMarkAllAsRead,
   unreadCountByChannel = {}
 }) => {
   const [activeChannelId, setActiveChannelId] = useState<string>(selectedChannelId || '');
@@ -313,7 +316,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   return (
     <div className="h-[calc(100vh-8.5rem)] min-h-[580px] bg-white rounded-2xl shadow-xl border border-slate-200 flex overflow-hidden">
       {/* LEFT SIDEBAR: Channels & Conversations */}
-      <div className="w-80 md:w-96 border-r border-slate-200 flex flex-col bg-slate-50/50 shrink-0">
+      <div className={`w-full md:w-96 border-r border-slate-200 flex-col bg-slate-50/50 shrink-0 ${activeChannelId ? 'hidden md:flex' : 'flex'}`}>
         {/* Sidebar Header */}
         <div className="p-4 border-b border-slate-200 space-y-3 bg-white">
           <div className="flex items-center justify-between">
@@ -327,14 +330,27 @@ export const ChatView: React.FC<ChatViewProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={() => setIsNewChatModalOpen(true)}
-              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition flex items-center gap-1 text-xs font-semibold cursor-pointer"
-              title="Démarrer une nouvelle discussion"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Nouveau</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              {onMarkAllAsRead && (
+                <button
+                  type="button"
+                  onClick={onMarkAllAsRead}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl shadow-xs transition flex items-center gap-1 text-xs font-semibold cursor-pointer border border-slate-200"
+                  title="Tout marquer comme lu"
+                >
+                  <CheckCheck className="w-4 h-4 text-slate-600" />
+                  <span className="hidden sm:inline">Tout lu</span>
+                </button>
+              )}
+              <button
+                onClick={() => setIsNewChatModalOpen(true)}
+                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-xs transition flex items-center gap-1 text-xs font-semibold cursor-pointer"
+                title="Démarrer une nouvelle discussion"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nouveau</span>
+              </button>
+            </div>
           </div>
 
           {/* Search channel */}
@@ -591,12 +607,23 @@ export const ChatView: React.FC<ChatViewProps> = ({
       </div>
 
       {/* CENTER & RIGHT AREA: Chat Header, Messages & Input */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white">
+      <div className={`flex-1 flex-col min-w-0 bg-white ${activeChannelId ? 'flex' : 'hidden md:flex'}`}>
         {activeChannel ? (
           <>
             {/* Active Channel Header */}
-            <div className="p-3.5 border-b border-slate-200 flex items-center justify-between bg-white shadow-xs z-10">
-              <div className="flex items-center gap-3 min-w-0">
+            <div className="p-3 sm:p-3.5 border-b border-slate-200 flex items-center justify-between bg-white shadow-xs z-10">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChannelId('');
+                    onSelectChannel?.('');
+                  }}
+                  className="md:hidden p-1.5 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition flex items-center justify-center cursor-pointer shrink-0"
+                  title="Retour aux discussions"
+                >
+                  <ArrowLeft className="w-5 h-5 text-slate-700" />
+                </button>
                 {getChannelAvatar(activeChannel)}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

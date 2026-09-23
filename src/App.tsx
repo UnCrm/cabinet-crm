@@ -234,6 +234,27 @@ export default function App() {
     }
   });
 
+  // Re-sync timestamps whenever currentUser or channels change
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const key = `crm_chat_read_${currentUser.id}`;
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        setLastReadTimestamps(JSON.parse(raw));
+      } else {
+        // First time login for this user: mark all existing channels as read up to current timestamp
+        const initialTimestamps: Record<string, number> = {};
+        const now = Date.now();
+        channels.forEach(ch => {
+          initialTimestamps[ch.id] = now;
+        });
+        localStorage.setItem(key, JSON.stringify(initialTimestamps));
+        setLastReadTimestamps(initialTimestamps);
+      }
+    } catch {}
+  }, [currentUser?.id, channels]);
+
   const markChannelAsRead = useCallback((chanId: string) => {
     if (!chanId || !currentUser) return;
     const now = Date.now();
@@ -245,6 +266,19 @@ export default function App() {
       return next;
     });
   }, [currentUser]);
+
+  const markAllChannelsAsRead = useCallback(() => {
+    if (!currentUser) return;
+    const now = Date.now();
+    const next: Record<string, number> = {};
+    channels.forEach(ch => {
+      next[ch.id] = now;
+    });
+    try {
+      localStorage.setItem(`crm_chat_read_${currentUser.id}`, JSON.stringify(next));
+    } catch {}
+    setLastReadTimestamps(next);
+  }, [currentUser, channels]);
 
   // When viewing chat and a channel is selected, mark as read
   useEffect(() => {
@@ -381,7 +415,8 @@ export default function App() {
         ? new Date(msg.createdAtIso).getTime()
         : (msg.timestamp ? new Date(msg.timestamp).getTime() : 0);
 
-      if (msgTime > lastRead) {
+      // Strict unread check: only count messages created after the lastRead timestamp
+      if (lastRead > 0 && msgTime > lastRead) {
         counts[msg.channelId] = (counts[msg.channelId] || 0) + 1;
       }
     });
@@ -862,8 +897,9 @@ export default function App() {
             selectedChannelId={selectedChatChannelId}
             onSelectChannel={(chanId) => {
               setSelectedChatChannelId(chanId);
-              markChannelAsRead(chanId);
+              if (chanId) markChannelAsRead(chanId);
             }}
+            onMarkAllAsRead={markAllChannelsAsRead}
             unreadCountByChannel={unreadCountByChannel}
           />
         )}
