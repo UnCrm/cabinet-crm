@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead",
+      "description": "Dossier prospect d'assurance (Auto, Habitation, VTC)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Identifiant unique du prospect" },
+        "referenceDevis": { "type": "string", "description": "Numéro de devis unique" },
+        "type": { "type": "string", "enum": ["AUTO", "HABITATION", "VTC"] },
+        "status": { "type": "string" },
+        "qualification": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "assignedBroker": { "type": "string" },
+        "attribueA": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "equipe": { "type": "string" },
+        "civilite": { "type": "string" },
+        "nom": { "type": "string" },
+        "prenom": { "type": "string" },
+        "telephone": { "type": "string" },
+        "email": { "type": "string" },
+        "ville": { "type": "string" },
+        "codePostal": { "type": "string" }
+      },
+      "required": ["id", "referenceDevis", "type", "status", "nom", "prenom", "telephone", "createdAt", "updatedAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Collaborateur ou conseiller du cabinet d'assurance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Identifiant de l'utilisateur" },
+        "nom": { "type": "string" },
+        "prenom": { "type": "string" },
+        "pseudo": { "type": "string" },
+        "email": { "type": "string" },
+        "telephone": { "type": "string" },
+        "role": { "type": "string" },
+        "equipe": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIF", "INACTIF"] },
+        "avatarUrl": { "type": "string" },
+        "specialite": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "nom", "prenom", "email", "role", "status", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Message du chat collaboratif interne",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "channelId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "channelId", "senderId", "senderName", "content", "timestamp"]
+    },
+    "CabinetConfig": {
+      "title": "CabinetConfig",
+      "description": "Paramètres généraux du cabinet d'assurance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nom": { "type": "string" },
+        "email": { "type": "string" },
+        "telephone": { "type": "string" },
+        "adresse": { "type": "string" },
+        "orias": { "type": "string" }
+      },
+      "required": ["id", "nom", "email"]
+    }
+  },
+  "firestore": {
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Collection centrale des dossiers et leads d'assurance"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Annuaire des collaborateurs et conseillers du cabinet"
+    },
+    "/chat_messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Historique des échanges du chat d'équipe"
+    },
+    "/cabinet_config/{configId}": {
+      "schema": "CabinetConfig",
+      "description": "Configurations globales du cabinet"
+    }
+  }
+}

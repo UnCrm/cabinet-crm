@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient: Deep Royal Blue & Indigo -->
+    <radialGradient id="bgGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="45%" stop-color="#1d4ed8" />
+      <stop offset="80%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </radialGradient>
+
+    <!-- Outer Ring Gradient -->
+    <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="30%" stop-color="#818cf8" />
+      <stop offset="70%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#22d3ee" />
+    </linearGradient>
+
+    <!-- Plus Accent Gradient -->
+    <linearGradient id="plusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Text 3D Shadow -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Circular Base Badge -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)" />
+
+  <!-- Premium Outer Neon Ring -->
+  <circle cx="256" cy="256" r="236" fill="none" stroke="url(#goldRing)" stroke-width="8" opacity="0.9" />
+  
+  <!-- Subtle Inner Glass Accent Circle -->
+  <circle cx="256" cy="256" r="215" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.25" />
+
+  <!-- Shield Watermark subtle icon in background -->
+  <path d="M256 120 C290 120 325 135 325 135 C325 210 275 270 256 290 C237 270 187 210 187 135 C187 135 222 120 256 120 Z" 
+        fill="#ffffff" opacity="0.08" />
+
+  <!-- Group for Text "CRM+" centered with high impact typography -->
+  <g filter="url(#softGlow)" text-anchor="middle" dominant-baseline="central">
+    <!-- "CRM" in bold display font -->
+    <text x="210" y="258" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-weight="900" 
+          font-size="126" 
+          letter-spacing="2"
+          fill="#ffffff">CRM</text>
+    
+    <!-- "+" badge / symbol in vibrant neon emerald green -->
+    <text x="350" y="240" 
+          font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-weight="900" 
+          font-size="140" 
+          fill="url(#plusGrad)">+</text>
+  </g>
+
+  <!-- Small Subtitle Capsule: "ASSURANCE" or "PRO" -->
+  <rect x="166" y="340" width="180" height="34" rx="17" fill="#ffffff" fill-opacity="0.18" />
+  <text x="256" y="358" 
+        text-anchor="middle" 
+        dominant-baseline="central"
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+        font-weight="800" 
+        font-size="16" 
+        letter-spacing="4" 
+        fill="#93c5fd">PRO COURTAGE</text>
+</svg>

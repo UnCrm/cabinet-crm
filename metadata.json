@@ -1,0 +1,6 @@
+{
+  "name": "Cabinet CRM Assurance - Auto, Habitation, VTC",
+  "description": "CRM complet de gestion des leads d'assurance Auto, Habitation et VTC avec synchronisation Cloud Firebase en temps réel, mobilité terrain, tableau de bord, devis, import/export Excel et gestion des utilisateurs (RBAC).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

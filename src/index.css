@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Échelle typographique globale réduite & dense pour le CRM */
+:root,
+html {
+  font-size: 13.5px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Densités sélectionnables par l'utilisateur */
+html[data-font-size="compact"] {
+  font-size: 12.5px;
+}
+
+html[data-font-size="minimized"],
+html[data-font-size="reduced"] {
+  font-size: 13.5px;
+}
+
+html[data-font-size="standard"] {
+  font-size: 15px;
+}
+
+body {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: #1e293b;
+}
+
+/* Réduction et netteté des éléments de formulaires et boutons */
+input, select, textarea {
+  font-size: 0.9375rem;
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* When printing, hide all CRM navigation, sidebars, dashboard and lead tables */
+  body > *:not(#root) {
+    display: none !important;
+  }
+
+  /* Hide elements marked as non-printable or buttons */
+  .no-print, button, .print-hide, nav, header, aside {
+    display: none !important;
+  }
+
+  /* When a modal with printable document is open, hide all CRM background elements */
+  body:has(#printable-devoir-conseil) #root > *:not(.fixed) {
+    display: none !important;
+  }
+
+  body:has(#printable-devoir-conseil) .fixed {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+  }
+
+  body:has(#printable-devoir-conseil) .fixed > div {
+    max-width: 100% !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body:has(#printable-devoir-conseil) .fixed > div > *:not(.overflow-y-auto) {
+    display: none !important;
+  }
+
+  body:has(#printable-devoir-conseil) .overflow-y-auto {
+    overflow: visible !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Make printable document take 100% page width with exact A4 print rules */
+  #printable-quote, #printable-devoir-conseil {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    background: white !important;
+  }
+
+  .print-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    min-height: 275mm;
+    box-sizing: border-box;
+    padding: 10mm 12mm !important;
+    background: white !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .avoid-break-inside {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+

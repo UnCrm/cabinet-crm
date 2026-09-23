@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny for unspecified paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Leads collection - Centralisation temps réel des devis et prospects
+    match /leads/{leadId} {
+      allow read, write: if true;
+    }
+
+    // Users collection - Annuaire des collaborateurs et conseillers
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Chat messages - Messagerie d'équipe instantanée
+    match /chat_messages/{messageId} {
+      allow read, write: if true;
+    }
+
+    // Chat channels - Salons et conversations directes
+    match /chat_channels/{channelId} {
+      allow read, write: if true;
+    }
+
+    // Cabinet configurations & settings (Nom, Logo, SMTP, Partenaires, Équipes)
+    match /cabinet_config/{configId} {
+      allow read, write: if true;
+    }
+
+    // Suivi des sessions agents, heures loguées et pauses
+    match /agent_sessions/{sessionId} {
+      allow read, write: if true;
+    }
+
+    // Test connection
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
